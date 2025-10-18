@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: usuario
+      POSTGRES_PASSWORD: senha
+      POSTGRES_DB: meu_banco
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  etl:
+    build: .
+    container_name: beam_etl
+    volumes:
+      - ./output:/app/output
+    depends_on:
+      - mongo
+      - postgres
+    command: >
+      python pipeline.py
+        --mongo_uri mongodb://mongo:27017
+        --mongo_db test
+        --mongo_collection minha_colecao
+        --pg_host postgres
+        --pg_port 5432
+        --pg_user usuario
+        --pg_password senha
+        --pg_database meu_banco
+        --pg_table minha_tabela
+        --output_path /app/output
+
+volumes:
+  mongo_data:
+  postgres_data:
